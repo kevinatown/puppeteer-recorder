@@ -4,14 +4,22 @@ import Block from './Block'
 
 const importPuppeteer = `const puppeteer = require('puppeteer');\n`
 
+const newPage = `const page = await browser.newPage();`
+
 const header = `const browser = await puppeteer.launch()
-const page = await browser.newPage()`
+  ${newPage}`
 
 const footer = `await browser.close()`
 
 const wrappedHeader = `(async () => {
   const browser = await puppeteer.launch()
   const page = await browser.newPage()\n`
+
+const useBrowserPageHeader = `async (browser) => {
+  ${newPage}`;
+
+const useBrowserPageFooter = `return page;
+}`
 
 const wrappedFooter = `  await browser.close()
 })()`
@@ -21,7 +29,8 @@ export const defaults = {
   headless: true,
   waitForNavigation: true,
   waitForSelectorOnClick: true,
-  blankLinesBetweenBlocks: true
+  blankLinesBetweenBlocks: true,
+  useExistingBrowser: true
 }
 
 export default class CodeGenerator {
@@ -35,6 +44,9 @@ export default class CodeGenerator {
   }
 
   generate (events) {
+    if (this._options.useExistingBrowser) {
+      return useBrowserPageHeader + this._parseEvents(events) + useBrowserPageFooter
+    }
     return importPuppeteer + this._getHeader() + this._parseEvents(events) + this._getFooter()
   }
 
@@ -46,6 +58,9 @@ export default class CodeGenerator {
   }
 
   _getFooter () {
+    if (this._options.useExistingBrowser) {
+      return 'return page;';
+    }
     return this._options.wrapAsync ? wrappedFooter : footer
   }
 
@@ -69,7 +84,7 @@ export default class CodeGenerator {
           const next = i + 1
           if (events[next] && events[next].action === 'navigation*' && this._options.waitForNavigation && !this._navigationPromiseSet) {
             const block = new Block(this._frameId)
-            block.addLine({type: pptrActions.NAVIGATION_PROMISE, value: `const navigationPromise = page.waitForNavigation()`})
+            block.addLine({type: pptrActions.NAVIGATION_PROMISE, value: `const navigationPromise = page.waitForNavigation();`})
             this._blocks.push(block)
             this._navigationPromiseSet = true
           }
@@ -137,27 +152,27 @@ export default class CodeGenerator {
 
   _handleKeyDown (selector, value) {
     const block = new Block(this._frameId)
-    block.addLine({ type: domEvents.KEYDOWN, value: `await ${this._frame}.type('${selector}', '${value}')` })
+    block.addLine({ type: domEvents.KEYDOWN, value: `await ${this._frame}.type('${selector}', '${value}');` })
     return block
   }
 
   _handleClick (selector) {
     const block = new Block(this._frameId)
     if (this._options.waitForSelectorOnClick) {
-      block.addLine({ type: domEvents.CLICK, value: `await ${this._frame}.waitForSelector('${selector}')` })
+      block.addLine({ type: domEvents.CLICK, value: `await ${this._frame}.waitForSelector('${selector}');` })
     }
-    block.addLine({ type: domEvents.CLICK, value: `await ${this._frame}.click('${selector}')` })
+    block.addLine({ type: domEvents.CLICK, value: `await ${this._frame}.click('${selector}');` })
     return block
   }
   _handleChange (selector, value) {
-    return new Block(this._frameId, { type: domEvents.CHANGE, value: `await ${this._frame}.select('${selector}', '${value}')` })
+    return new Block(this._frameId, { type: domEvents.CHANGE, value: `await ${this._frame}.select('${selector}', '${value}');` })
   }
   _handleGoto (href) {
-    return new Block(this._frameId, { type: pptrActions.GOTO, value: `await ${this._frame}.goto('${href}')` })
+    return new Block(this._frameId, { type: pptrActions.GOTO, value: `await ${this._frame}.goto('${href}');` })
   }
 
   _handleViewport (width, height) {
-    return new Block(this._frameId, { type: pptrActions.VIEWPORT, value: `await ${this._frame}.setViewport({ width: ${width}, height: ${height} })` })
+    return new Block(this._frameId, { type: pptrActions.VIEWPORT, value: `await ${this._frame}.setViewport({ width: ${width}, height: ${height} });` })
   }
 
   _handleWaitForNavigation () {
@@ -173,7 +188,7 @@ export default class CodeGenerator {
       const lines = block.getLines()
       for (let line of lines) {
         if (line.type === pptrActions.NAVIGATION) {
-          this._blocks[i].addLineToTop({type: pptrActions.NAVIGATION_PROMISE, value: `const navigationPromise = page.waitForNavigation()`})
+          this._blocks[i].addLineToTop({type: pptrActions.NAVIGATION_PROMISE, value: `const navigationPromise = page.waitForNavigation();`})
           return
         }
       }
@@ -185,9 +200,9 @@ export default class CodeGenerator {
       const lines = block.getLines()
       for (let line of lines) {
         if (line.frameId && Object.keys(this._allFrames).includes(line.frameId.toString())) {
-          const declaration = `const frame_${line.frameId} = frames.find(f => f.url() === '${this._allFrames[line.frameId]}')`
+          const declaration = `const frame_${line.frameId} = frames.find(f => f.url() === '${this._allFrames[line.frameId]}');`
           this._blocks[i].addLineToTop(({ type: pptrActions.FRAME_SET, value: declaration }))
-          this._blocks[i].addLineToTop({ type: pptrActions.FRAME_SET, value: 'let frames = await page.frames()' })
+          this._blocks[i].addLineToTop({ type: pptrActions.FRAME_SET, value: 'let frames = await page.frames();' })
           delete this._allFrames[line.frameId]
           break
         }

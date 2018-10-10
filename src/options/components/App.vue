@@ -43,6 +43,12 @@
                 add blank lines between code blocks
               </label>
             </div>
+             <div class="settings-group">
+              <label>
+                <input id="options-code-useExistingBrowser" type="checkbox" v-model="options.code.useExistingBrowser" @change="save">
+                do not wrap code in Browser and Pupetteer config
+              </label>
+            </div>
           </div>
         </div>
       </div>
