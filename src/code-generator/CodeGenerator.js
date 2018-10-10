@@ -18,7 +18,7 @@ const wrappedHeader = `(async () => {
 const useBrowserPageHeader = `async (browser) => {
   ${newPage}`;
 
-const useBrowserPageFooter = `return page;
+const useBrowserPageFooter = `  return page;
 }`
 
 const wrappedFooter = `  await browser.close()

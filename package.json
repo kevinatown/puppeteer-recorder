@@ -1,5 +1,5 @@
 {
-  "name": "puppeteer-recorder edit",
+  "name": "puppeteer-recorder",
   "version": "0.4.1",
   "description": "A Chrome extension for recording browser interaction and generating Puppeteer scripts",
   "main": "index.js",

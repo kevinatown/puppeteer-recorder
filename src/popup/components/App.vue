@@ -33,6 +33,7 @@
         <div class="results-footer" v-show="showResultsTab">
           <button class="btn btn-sm btn-primary" @click="restart" v-show="code">Restart</button>
           <a href="#" v-clipboard:copy='code' @click="setCopying" v-show="code">{{copyLinkText}}</a>
+          <a href="#" @click="downloadCode" v-show="code">Download</a>
         </div>
       </div>
       <HelpTab v-show="showHelp"></HelpTab>
@@ -164,6 +165,11 @@
       setCopying () {
         this.isCopying = true
         setTimeout(() => { this.isCopying = false }, 1500)
+      },
+      downloadCode () {
+        const blob = new Blob([this.code], {type: "text/javascript"});
+        const url = URL.createObjectURL(blob);
+        this.$chrome.downloads.download({ url });
       },
       goHome () {
         this.showResultsTab = false
