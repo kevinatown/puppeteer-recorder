@@ -31,9 +31,14 @@
         </div>
         <ResultsTab :code="code" :copy-link-text="copyLinkText" :restart="restart" :set-copying="setCopying" v-show="showResultsTab"/>
         <div class="results-footer" v-show="showResultsTab">
-          <button class="btn btn-sm btn-primary" @click="restart" v-show="code">Restart</button>
-          <a href="#" v-clipboard:copy='code' @click="setCopying" v-show="code">{{copyLinkText}}</a>
-          <a href="#" @click="downloadCode" v-show="code">Download</a>
+          <div class="row">  
+            <input type='text' placeholder="file name" v-model="fileName" />
+          </div>
+          <div class="row button-groups">  
+            <button class="btn btn-sm btn-primary" @click="restart" v-show="code">Restart</button>
+            <a href="#" v-clipboard:copy='code' @click="setCopying" v-show="code">{{copyLinkText}}</a>
+            <a href="#" @click="downloadCode" v-show="code">Download</a>
+          </div>
         </div>
       </div>
       <HelpTab v-show="showHelp"></HelpTab>
@@ -53,6 +58,7 @@
     components: { ResultsTab, RecordingTab, HelpTab },
     data () {
       return {
+        fileName: '',
         code: '',
         showResultsTab: false,
         showHelp: false,
@@ -169,7 +175,12 @@
       downloadCode () {
         const blob = new Blob([this.code], {type: "text/javascript"});
         const url = URL.createObjectURL(blob);
-        this.$chrome.downloads.download({ url });
+        if (this.fileName !== '') {
+          const fileName = this.fileName.indexOf('.js') > 0 ? this.fileName : `${this.fileName}.js`; 
+          this.$chrome.downloads.download({ url, filename });
+        } else {
+          this.$chrome.downloads.download({ url });
+        }
       },
       goHome () {
         this.showResultsTab = false
@@ -242,9 +253,26 @@
 
     .recording-footer {
       @include footer()
+
     }
     .results-footer {
       @include footer()
+      display: grid;
+      grid: auto-flow / 1fr;
+      .row {
+        width: 100%;
+
+        input[type="text"] {
+          width: 100%;
+        }
+
+        &.button-groups {
+          display: grid;
+          align-items: baseline;
+          grid-template-columns: auto auto auto;
+          justify-content: space-between;
+        }
+      }
     }
   }
 </style>
