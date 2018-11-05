@@ -177,7 +177,7 @@
         const url = URL.createObjectURL(blob);
         if (this.fileName !== '') {
           const fileName = this.fileName.indexOf('.js') > 0 ? this.fileName : `${this.fileName}.js`; 
-          this.$chrome.downloads.download({ url, filename });
+          this.$chrome.downloads.download({ url, fileName });
         } else {
           this.$chrome.downloads.download({ url });
         }
