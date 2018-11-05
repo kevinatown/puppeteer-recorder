@@ -67,9 +67,14 @@ class EventRecorder {
   recordEvent (e) {
     if (this.previousEvent && this.previousEvent.timeStamp === e.timeStamp) return
     this.previousEvent = e
-
+    console.log(e.target)
+    const finderOpts = {
+      seedMinLength: 5,
+      optimizedMinLength: 10,
+      className: name => !name.startsWith('ng-')
+    };
     const msg = {
-      selector: finder(e.target, { seedMinLength: 5, optimizedMinLength: 10 }),
+      selector: finder(e.target, finderOpts),
       value: e.target.value,
       tagName: e.target.tagName,
       action: e.type,

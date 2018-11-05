@@ -11,6 +11,13 @@ class RecordingController {
   }
 
   boot () {
+    chrome.contextMenus.create({
+      title: "Add Validation",
+      id: "validation",
+      contexts: ['all'],
+      // type: "separator"
+    });
+    chrome.contextMenus.onClicked.addListener(this.addValidation);
     chrome.extension.onConnect.addListener(port => {
       port.onMessage.addListener(msg => {
         if (msg.action && msg.action === 'start') this.start()
@@ -50,7 +57,7 @@ class RecordingController {
   stop () {
     console.debug('stop recording')
     this._badgeState = this._recording.length > 0 ? '1' : ''
-
+    console.log(this._recording)
     chrome.runtime.onMessage.removeListener(this._boundedMessageHandler)
     chrome.webNavigation.onCompleted.removeListener(this._boundedNavigationHandler)
     chrome.webNavigation.onBeforeNavigate.removeListener(this._boundedWaitHandler)
@@ -136,6 +143,11 @@ class RecordingController {
 
   injectScript () {
     chrome.tabs.executeScript({ file: 'content-script.js', allFrames: false })
+  }
+
+  addValidation(info, tab) {
+    console.log("info: ", info);
+    console.log("tab: ", tab);
   }
 }
 

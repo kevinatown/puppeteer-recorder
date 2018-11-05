@@ -3,7 +3,11 @@ import pptrActions from './pptr-actions'
 import Block from './Block'
 
 const importPuppeteer = `const puppeteer = require('puppeteer');\n`
-
+const tryStart = `try {
+  `;
+const catchEnd = `} catch (e) {
+    throw e;
+  }`;
 const newPage = `const page = await browser.newPage();`
 
 const header = `const browser = await puppeteer.launch()
@@ -16,9 +20,11 @@ const wrappedHeader = `(async () => {
   const page = await browser.newPage()\n`
 
 const useBrowserPageHeader = `async (browser) => {
-  ${newPage}`;
+  ${tryStart}
+    ${newPage}`;
 
-const useBrowserPageFooter = `  return page;
+const useBrowserPageFooter = `  ${catchEnd}
+  return page;
 }`
 
 const wrappedFooter = `  await browser.close()
@@ -59,18 +65,17 @@ export default class CodeGenerator {
 
   _getFooter () {
     if (this._options.useExistingBrowser) {
-      return 'return page;';
+      return '';
     }
     return this._options.wrapAsync ? wrappedFooter : footer
   }
 
   _parseEvents (events) {
-    console.debug(`generating code for ${events ? events.length : 0} events`)
+    console.log(`generating code for ${events ? events.length : 0} events`)
     let result = ''
-
     for (let i = 0; i < events.length; i++) {
       const { action, selector, value, href, keyCode, tagName, frameId, frameUrl } = events[i]
-
+      console.log(action, selector, value, href, keyCode, tagName, frameId, frameUrl)
       // we need to keep a handle on what frames events originate from
       this._setFrames(frameId, frameUrl)
 
@@ -110,7 +115,8 @@ export default class CodeGenerator {
 
     this._postProcess()
 
-    const indent = this._options.wrapAsync ? '  ' : ''
+    let indent = this._options.wrapAsync ? '  ' : '';
+    indent = this._options.useExistingBrowser ? `${indent}  ` : indent;
     const newLine = `\n`
 
     for (let block of this._blocks) {
@@ -119,7 +125,9 @@ export default class CodeGenerator {
         result += indent + line.value + newLine
       }
     }
-
+    if (this._options.useExistingBrowser) {
+      result = `${result}${indent}return page;${newLine}`
+    }
     return result
   }
 
