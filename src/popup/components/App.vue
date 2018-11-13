@@ -48,7 +48,8 @@
 
 <script>
   import { version } from '../../../package.json'
-  import CodeGenerator from '../../code-generator/CodeGenerator'
+  import CodeGenerator from '../../code-generator/CodeGenerator';
+  import ClassGenerator from '../../code-generator/ClassGenerator';
   import RecordingTab from "./RecordingTab.vue"
   import ResultsTab from "./ResultsTab.vue";
   import HelpTab from "./HelpTab.vue";
@@ -117,14 +118,15 @@
         this.bus.postMessage({ action: 'stop' })
 
         this.$chrome.storage.local.get(['recording', 'options'], ({ recording, options }) => {
+          console.log('recording', recording);
           console.debug('loaded recording', recording)
           console.debug('loaded options', options)
 
           this.recording = recording
           const codeOptions = options ? options.code : {}
 
-          const codeGen = new CodeGenerator(codeOptions)
-          this.code = codeGen.generate(this.recording)
+          const codeGen = new ClassGenerator(codeOptions)
+          this.code = codeGen.generate(this.recording);
           this.showResultsTab = true
           this.storeState()
         })
@@ -176,8 +178,8 @@
         const blob = new Blob([this.code], {type: "text/javascript"});
         const url = URL.createObjectURL(blob);
         if (this.fileName !== '') {
-          const fileName = this.fileName.indexOf('.js') > 0 ? this.fileName : `${this.fileName}.js`; 
-          this.$chrome.downloads.download({ url, fileName });
+          const filename = this.fileName.indexOf('.js') > 0 ? this.fileName : `${this.fileName}.js`; 
+          this.$chrome.downloads.download({ url, filename });
         } else {
           this.$chrome.downloads.download({ url });
         }

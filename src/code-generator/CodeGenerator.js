@@ -1,6 +1,7 @@
 import domEvents from './dom-events-to-record'
 import pptrActions from './pptr-actions'
 import Block from './Block'
+import { defaults } from './ClassGenerator';
 
 const importPuppeteer = `const puppeteer = require('puppeteer');\n`
 const tryStart = `try {
@@ -30,14 +31,13 @@ const useBrowserPageFooter = `  ${catchEnd}
 const wrappedFooter = `  await browser.close()
 })()`
 
-export const defaults = {
-  wrapAsync: true,
-  headless: true,
-  waitForNavigation: true,
-  waitForSelectorOnClick: true,
-  blankLinesBetweenBlocks: true,
-  useExistingBrowser: true
-}
+const classHeader = `  async getInstance () {
+    try {`;
+
+const classFooter = `    } catch(e) {
+      throw new Error(e);
+    }
+  }`;
 
 export default class CodeGenerator {
   constructor (options) {
@@ -50,6 +50,9 @@ export default class CodeGenerator {
   }
 
   generate (events) {
+    if (this._options.generateAssertions) {
+      return `${classHeader}\n${this._parseEvents(events)}\n${classFooter}`;ß
+    }
     if (this._options.useExistingBrowser) {
       return useBrowserPageHeader + this._parseEvents(events) + useBrowserPageFooter
     }
@@ -75,7 +78,7 @@ export default class CodeGenerator {
     let result = ''
     for (let i = 0; i < events.length; i++) {
       const { action, selector, value, href, keyCode, tagName, frameId, frameUrl } = events[i]
-      console.log(action, selector, value, href, keyCode, tagName, frameId, frameUrl)
+      // console.log(action, selector, value, href, keyCode, tagName, frameId, frameUrl)
       // we need to keep a handle on what frames events originate from
       this._setFrames(frameId, frameUrl)
 
@@ -117,6 +120,7 @@ export default class CodeGenerator {
 
     let indent = this._options.wrapAsync ? '  ' : '';
     indent = this._options.useExistingBrowser ? `${indent}  ` : indent;
+    indent = this._options.generateAssertions ? `${indent}  ` : indent;
     const newLine = `\n`
 
     for (let block of this._blocks) {

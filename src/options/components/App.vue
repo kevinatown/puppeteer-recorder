@@ -49,6 +49,12 @@
                 do not wrap code in Browser and Pupetteer config
               </label>
             </div>
+            <div class="settings-group">
+              <label>
+                <input id="options-code-generateAssertions" type="checkbox" v-model="options.code.generateAssertions" @change="save">
+                generate assertions and wrap all code in a class object
+              </label>
+            </div>
           </div>
         </div>
       </div>
@@ -63,7 +69,7 @@
 </template>
 
 <script>
-  import { defaults as code } from '../../code-generator/CodeGenerator'
+  import { defaults as code } from '../../code-generator/ClassGenerator'
 
   const defaults = {
     code
