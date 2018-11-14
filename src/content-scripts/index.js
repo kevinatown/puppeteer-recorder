@@ -72,6 +72,7 @@ class EventRecorder {
       seedMinLength: 5,
       optimizedMinLength: 10,
       className: name => !name.startsWith('ng-') && !name.startsWith('ui-')
+      tagName: name => !name.startsWith('ui-')
     };
     const msg = {
       selector: finder(e.target, finderOpts),
