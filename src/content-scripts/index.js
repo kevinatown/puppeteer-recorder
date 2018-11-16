@@ -1,6 +1,7 @@
 import eventsToRecord from '../code-generator/dom-events-to-record'
 import elementsToBindTo from '../code-generator/elements-to-bind-to'
 import finder from '@medv/finder'
+import xh from './xpath_helper';
 
 class EventRecorder {
   constructor () {
@@ -64,6 +65,10 @@ class EventRecorder {
     }
   }
 
+
+  // 
+  // TODO: figure out if the used xPath plugin is the best.
+  // 
   recordEvent (e) {
     if (this.previousEvent && this.previousEvent.timeStamp === e.timeStamp) return
     this.previousEvent = e
@@ -75,6 +80,7 @@ class EventRecorder {
       tagName: name => !name.startsWith('ui-')
     };
     const msg = {
+      xpath: xh.makeQueryForElement(e.target);
       selector: finder(e.target, finderOpts),
       value: e.target.value,
       tagName: e.target.tagName,
