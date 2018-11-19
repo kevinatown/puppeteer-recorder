@@ -55,6 +55,12 @@
                 generate assertions and wrap all code in a class object
               </label>
             </div>
+            <div class="settings-group">
+              <label>
+                <input id="options-code-useXPath" type="checkbox" v-model="options.code.useXPath" @change="save">
+                Use xPath instead of CSS selectors
+              </label>
+            </div>
           </div>
         </div>
       </div>

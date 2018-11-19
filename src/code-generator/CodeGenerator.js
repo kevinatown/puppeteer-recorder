@@ -77,7 +77,15 @@ export default class CodeGenerator {
     console.log(`generating code for ${events ? events.length : 0} events`)
     let result = ''
     for (let i = 0; i < events.length; i++) {
-      const { action, selector, value, href, keyCode, tagName, frameId, frameUrl } = events[i]
+      const { action, value, href, keyCode, tagName, frameId, frameUrl } = events[i]
+
+      let selector = events[i].selector;
+      // 
+      // TODO: FIX THIS SHIT, kinda messy
+      // 
+      if (this._options.useXPath) {
+        selector = events[i].xPath;
+      }
       // console.log(action, selector, value, href, keyCode, tagName, frameId, frameUrl)
       // we need to keep a handle on what frames events originate from
       this._setFrames(frameId, frameUrl)

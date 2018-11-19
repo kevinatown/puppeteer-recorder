@@ -67,7 +67,7 @@ class EventRecorder {
 
 
   // 
-  // TODO: figure out if the used xPath plugin is the best.
+  // TODO: figure out if the used xPath plugin/shamelessly stolen code is the best.
   // 
   recordEvent (e) {
     if (this.previousEvent && this.previousEvent.timeStamp === e.timeStamp) return
@@ -76,11 +76,11 @@ class EventRecorder {
     const finderOpts = {
       seedMinLength: 5,
       optimizedMinLength: 10,
-      className: name => !name.startsWith('ng-') && !name.startsWith('ui-')
+      className: name => !name.startsWith('ng-') && !name.startsWith('ui-'),
       tagName: name => !name.startsWith('ui-')
     };
     const msg = {
-      xpath: xh.makeQueryForElement(e.target);
+      xPath: xh.makeQueryForElement(e.target),
       selector: finder(e.target, finderOpts),
       value: e.target.value,
       tagName: e.target.tagName,

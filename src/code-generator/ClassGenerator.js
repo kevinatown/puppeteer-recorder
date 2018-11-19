@@ -8,7 +8,8 @@ export const defaults = {
   waitForSelectorOnClick: true,
   blankLinesBetweenBlocks: true,
   useExistingBrowser: true,
-  generateAssertions: true
+  generateAssertions: true,
+  useXPath: true
 }
 
 const header = `class EndToEndInstance {

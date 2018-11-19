@@ -78,18 +78,18 @@ xh.makeQueryForElement = function(el) {
     var component = el.tagName.toLowerCase();
     var index = xh.getElementIndex(el);
     if (el.id) {
-      component += '[@id=\'' + el.id + '\']';
+      component += `[@id="${el.id}"]`;
     } else if (el.className) {
-      component += '[@class=\'' + el.className + '\']';
+      component += `[@class="${el.className}"]`;
     }
     if (index >= 1) {
       component += '[' + index + ']';
     }
     // If the last tag is an img, the user probably wants img/@src.
     if (query === '' && el.tagName.toLowerCase() === 'img') {
-      component += '/@src';
+      component += '//@src';
     }
-    query = '/' + component + query;
+    query = '//' + component + query;
   }
   return query;
 };
