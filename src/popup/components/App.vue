@@ -29,6 +29,7 @@
           </button>
           <a href="#" @click="showResultsTab = true" v-show="code">view code</a>
         </div>
+       <!--  <AssertionTab :code="code" :copy-link-text="copyLinkText" :restart="restart" :set-copying="setCopying" v-show="showResultsTab" /> -->
         <ResultsTab :code="code" :copy-link-text="copyLinkText" :restart="restart" :set-copying="setCopying" v-show="showResultsTab"/>
         <div class="results-footer" v-show="showResultsTab">
           <div class="row">  
@@ -50,13 +51,14 @@
   import { version } from '../../../package.json'
   import CodeGenerator from '../../code-generator/CodeGenerator';
   import ClassGenerator from '../../code-generator/ClassGenerator';
-  import RecordingTab from "./RecordingTab.vue"
+  import RecordingTab from "./RecordingTab.vue";
   import ResultsTab from "./ResultsTab.vue";
   import HelpTab from "./HelpTab.vue";
+  import AssertionTab from "./AssertionTab.vue";
 
   export default {
     name: 'App',
-    components: { ResultsTab, RecordingTab, HelpTab },
+    components: { ResultsTab, RecordingTab, HelpTab, AssertionTab },
     data () {
       return {
         fileName: '',
@@ -64,6 +66,7 @@
         showResultsTab: false,
         showHelp: false,
         liveEvents: [],
+        assertionEvents: [],
         recording: [],
         isRecording: false,
         isPaused: false,
@@ -116,7 +119,7 @@
       stop () {
         console.debug('stop recorder')
         this.bus.postMessage({ action: 'stop' })
-
+        console.log('rec stops ')
         this.$chrome.storage.local.get(['recording', 'options'], ({ recording, options }) => {
           console.log('recording', recording);
           console.debug('loaded recording', recording)
@@ -127,7 +130,15 @@
 
           const codeGen = new ClassGenerator(codeOptions)
           this.code = codeGen.generate(this.recording);
-          this.showResultsTab = true
+          // console.log(this.code)
+          // 
+          // TODO: set this that if options.getAssertions go to assertions tab or something
+          // 
+          // if (options) {
+
+          // } else {
+            this.showResultsTab = true
+          // }
           this.storeState()
         })
       },

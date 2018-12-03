@@ -73,54 +73,27 @@ export default class CodeGenerator {
     return this._options.wrapAsync ? wrappedFooter : footer
   }
 
+  // 
+  // TODO: switch this to parseEvents call parseSelectors or parseXPATH
+  // 
   _parseEvents (events) {
     console.log(`generating code for ${events ? events.length : 0} events`)
-    let result = ''
+    
+    let result = '';
+    
+    // 
+    // push xpath declare var
+    //
+    if (this._options.useXPath) {
+      this._blocks.push(this._handleClick(selector, events))
+    }
+
     for (let i = 0; i < events.length; i++) {
-      const { action, value, href, keyCode, tagName, frameId, frameUrl } = events[i]
-
-      let selector = events[i].selector;
-      // 
-      // TODO: FIX THIS SHIT, kinda messy
-      // 
+      
       if (this._options.useXPath) {
-        selector = events[i].xPath;
-      }
-      // console.log(action, selector, value, href, keyCode, tagName, frameId, frameUrl)
-      // we need to keep a handle on what frames events originate from
-      this._setFrames(frameId, frameUrl)
-
-      switch (action) {
-        case 'keydown':
-          if (keyCode === 9) {
-            this._blocks.push(this._handleKeyDown(selector, value, keyCode))
-          }
-          break
-        case 'click':
-          const next = i + 1
-          if (events[next] && events[next].action === 'navigation*' && this._options.waitForNavigation && !this._navigationPromiseSet) {
-            const block = new Block(this._frameId)
-            block.addLine({type: pptrActions.NAVIGATION_PROMISE, value: `const navigationPromise = page.waitForNavigation();`})
-            this._blocks.push(block)
-            this._navigationPromiseSet = true
-          }
-
-          this._blocks.push(this._handleClick(selector, events))
-          break
-        case 'change':
-          if (tagName === 'SELECT') {
-            this._blocks.push(this._handleChange(selector, value))
-          }
-          break
-        case 'goto*':
-          this._blocks.push(this._handleGoto(href, frameId))
-          break
-        case 'viewport*':
-          this._blocks.push((this._handleViewport(value.width, value.height)))
-          break
-        case 'navigation*':
-          this._blocks.push(this._handleWaitForNavigation())
-          break
+        this._parseXPath(events, i);
+      } else {
+        this._parseSelectors(events, i);
       }
     }
 
@@ -141,6 +114,92 @@ export default class CodeGenerator {
       result = `${result}${indent}return page;${newLine}`
     }
     return result
+  }
+
+  _parseSelectors(events, i) {
+    const { selector, action, value, href, keyCode, tagName, frameId, frameUrl } = events[i];
+
+    // we need to keep a handle on what frames events originate from
+    this._setFrames(frameId, frameUrl)
+
+    switch (action) {
+      case 'keydown':
+        if (keyCode === 9) {
+          this._blocks.push(this._handleKeyDown(selector, value, keyCode))
+        }
+        break
+      case 'click':
+        // 
+        // shit fix this and find out why...
+        //
+        const next = i + 1
+        if (events[next] && events[next].action === 'navigation*' && this._options.waitForNavigation && !this._navigationPromiseSet) {
+          const block = new Block(this._frameId)
+          block.addLine({type: pptrActions.NAVIGATION_PROMISE, value: `const navigationPromise = page.waitForNavigation();`})
+          this._blocks.push(block)
+          this._navigationPromiseSet = true
+        }
+
+        this._blocks.push(this._handleClick(selector, events))
+        break
+      case 'change':
+        if (tagName === 'SELECT') {
+          this._blocks.push(this._handleChange(selector, value))
+        }
+        break
+      case 'goto*':
+        this._blocks.push(this._handleGoto(href, frameId))
+        break
+      case 'viewport*':
+        this._blocks.push((this._handleViewport(value.width, value.height)))
+        break
+      case 'navigation*':
+        this._blocks.push(this._handleWaitForNavigation())
+        break
+    }
+  }
+
+  _parseXPath(events, i) {
+    const { xPath, action, value, href, keyCode, tagName, frameId, frameUrl } = events[i];
+    
+    // 
+    // TODO: ADD XPATH HANDLES 
+    // 
+    switch (action) {
+      case 'keydown':
+        if (keyCode === 9) {
+          this._blocks.push(this._handleXpathKeyDown(xPath, value, keyCode))
+        }
+        break
+      case 'click':
+        // 
+        // shit fix this and find out why....
+        // 
+        const next = i + 1
+        if (events[next] && events[next].action === 'navigation*' && this._options.waitForNavigation && !this._navigationPromiseSet) {
+          const block = new Block(this._frameId)
+          block.addLine({type: pptrActions.NAVIGATION_PROMISE, value: `const navigationPromise = page.waitForNavigation();`})
+          this._blocks.push(block)
+          this._navigationPromiseSet = true
+        }
+
+        this._blocks.push(this._handleXpathClick(xPath, events));
+        break
+      case 'change':
+        if (tagName === 'SELECT') {
+          this._blocks.push(this._handleChange(xPath, value))
+        }
+        break
+      case 'goto*':
+        this._blocks.push(this._handleGoto(href, frameId))
+        break
+      case 'viewport*':
+        this._blocks.push((this._handleViewport(value.width, value.height)))
+        break
+      case 'navigation*':
+        this._blocks.push(this._handleWaitForNavigation())
+        break
+    }
   }
 
   _setFrames (frameId, frameUrl) {
@@ -170,9 +229,51 @@ export default class CodeGenerator {
     }
   }
 
+  _handleXpathKeyDown (xpath, value) {
+    const block = new Block(this._frameId);
+    // 
+    // TODO: prob doesnt need to be unique, but could be...
+    // if not unique declare all vars at the top
+    // 
+    const xpathVarId = `xPathKeyDownAction`;
+    block.addLine({
+      type: domEvents.KEYDOWN,
+      value: `let ${xpathVarId} = await page.$x(${xpath});`
+    });
+    block.addLine({
+      type: domEvents.KEYDOWN,
+      value: `${xpathVarId}[0].value = ${value};`
+    });
+    return block;
+  }
+
   _handleKeyDown (selector, value) {
     const block = new Block(this._frameId)
     block.addLine({ type: domEvents.KEYDOWN, value: `await ${this._frame}.type('${selector}', '${value}');` })
+    return block
+  }
+
+  _handleXpathClick (xpath) {
+    const block = new Block(this._frameId);
+    // 
+    // TODO: prob doesnt need to be unique, but could be...
+    // if not unique declare all vars at the top
+    // 
+    const xpathVarId = `xPathClick`;
+    if (this._options.waitForSelectorOnClick) {
+      block.addLine({
+        type: domEvents.CLICK,
+        value: `await ${this._frame}.waitForXPath('${xpath}');` 
+      });
+    }
+    block.addLine({
+      type: domEvents.CLICK,
+      value: `let ${xpathVarId} = await page.$x(${xpath});`
+    });
+    block.addLine({
+      type: domEvents.CLICK,
+      value: `await ${xpathVarId}[0].click();`
+    })
     return block
   }
 
