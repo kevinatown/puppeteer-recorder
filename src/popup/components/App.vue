@@ -129,7 +129,7 @@
           const codeOptions = options ? options.code : {}
 
           const codeGen = new ClassGenerator(codeOptions)
-          this.code = codeGen.generate(this.recording);
+          this.code = codeGen.generate(recording);
           // console.log(this.code)
           // 
           // TODO: set this that if options.getAssertions go to assertions tab or something

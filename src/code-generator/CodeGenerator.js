@@ -47,6 +47,9 @@ export default class CodeGenerator {
     this._frameId = 0
     this._allFrames = {}
     this._navigationPromiseSet = false
+    this._xpathKeydownVar = `xPathKeyDownAction`;
+    this._xpathClickVar = `xPathClickAction`;
+    this._xpathChangeVar = `xPathChangeAction`;
   }
 
   generate (events) {
@@ -85,7 +88,18 @@ export default class CodeGenerator {
     // push xpath declare var
     //
     if (this._options.useXPath) {
-      this._blocks.push(this._handleClick(selector, events))
+      this._blocks.push(new Block({ 
+        type: `value`,
+        value: `let ${this._xpathKeydownVar};` 
+      }));
+      this._blocks.push(new Block({ 
+        type: `value`,
+        value: `let ${this._xpathClickVar};` 
+      }));
+      this._blocks.push(new Block({ 
+        type: `value`,
+        value: `let ${this._xpathChangeVar};`
+      }));
     }
 
     for (let i = 0; i < events.length; i++) {
@@ -96,8 +110,8 @@ export default class CodeGenerator {
         this._parseSelectors(events, i);
       }
     }
-
-    this._postProcess()
+    console.log('this blocks', this._blocks);
+    this._postProcess();
 
     let indent = this._options.wrapAsync ? '  ' : '';
     indent = this._options.useExistingBrowser ? `${indent}  ` : indent;
@@ -235,14 +249,13 @@ export default class CodeGenerator {
     // TODO: prob doesnt need to be unique, but could be...
     // if not unique declare all vars at the top
     // 
-    const xpathVarId = `xPathKeyDownAction`;
     block.addLine({
       type: domEvents.KEYDOWN,
-      value: `let ${xpathVarId} = await page.$x(${xpath});`
+      value: `${this._xpathKeydownVar} = await page.$x(${xpath})[0];`
     });
     block.addLine({
       type: domEvents.KEYDOWN,
-      value: `${xpathVarId}[0].value = ${value};`
+      value: `${this._xpathKeydownVar}.value = ${value};`
     });
     return block;
   }
@@ -259,7 +272,6 @@ export default class CodeGenerator {
     // TODO: prob doesnt need to be unique, but could be...
     // if not unique declare all vars at the top
     // 
-    const xpathVarId = `xPathClick`;
     if (this._options.waitForSelectorOnClick) {
       block.addLine({
         type: domEvents.CLICK,
@@ -268,11 +280,11 @@ export default class CodeGenerator {
     }
     block.addLine({
       type: domEvents.CLICK,
-      value: `let ${xpathVarId} = await page.$x(${xpath});`
+      value: `${this._xpathClickVar} = await page.$x(${xpath})[0];`
     });
     block.addLine({
       type: domEvents.CLICK,
-      value: `await ${xpathVarId}[0].click();`
+      value: `await ${this._xpathClickVar}.click();`
     })
     return block
   }
@@ -285,6 +297,20 @@ export default class CodeGenerator {
     block.addLine({ type: domEvents.CLICK, value: `await ${this._frame}.click('${selector}');` })
     return block
   }
+
+  _handleXpathChange (xpath, value) {
+    const block = new Block(this._frameId);
+    block.addLine({
+      type: domEvents.CHANGE,
+      value: `${this._xpathChangeVar} = await page.$x(${xpath})[0];`
+    });
+    block.addLine({
+      type: domEvents.CHANGE,
+      value: `${this._xpathChangeVar}.value = ${value};`
+    });
+    return block;
+  }
+
   _handleChange (selector, value) {
     return new Block(this._frameId, { type: domEvents.CHANGE, value: `await ${this._frame}.select('${selector}', '${value}');` })
   }
