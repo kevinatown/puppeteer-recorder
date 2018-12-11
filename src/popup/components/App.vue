@@ -53,7 +53,6 @@
   import RecordingTab from "./RecordingTab.vue";
   import ResultsTab from "./ResultsTab.vue";
   import HelpTab from "./HelpTab.vue";
-  import AssertionTab from "./AssertionTab.vue";
 
   export default {
     name: 'App',
