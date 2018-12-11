@@ -88,16 +88,16 @@ export default class CodeGenerator {
     // push xpath declare var
     //
     if (this._options.useXPath) {
-      this._blocks.push(new Block({ 
-        type: `value`,
+      this._blocks.push(new Block(this._frameId, { 
+        type: `xPathVariableDeclaration`,
         value: `let ${this._xpathKeydownVar};` 
       }));
-      this._blocks.push(new Block({ 
-        type: `value`,
+      this._blocks.push(new Block(this._frameId, { 
+        type: 'xPathVariableDeclaration',
         value: `let ${this._xpathClickVar};` 
       }));
-      this._blocks.push(new Block({ 
-        type: `value`,
+      this._blocks.push(new Block(this._frameId, { 
+        type: 'xPathVariableDeclaration',
         value: `let ${this._xpathChangeVar};`
       }));
     }
@@ -176,9 +176,6 @@ export default class CodeGenerator {
   _parseXPath(events, i) {
     const { xPath, action, value, href, keyCode, tagName, frameId, frameUrl } = events[i];
     
-    // 
-    // TODO: ADD XPATH HANDLES 
-    // 
     switch (action) {
       case 'keydown':
         if (keyCode === 9) {
@@ -187,7 +184,7 @@ export default class CodeGenerator {
         break
       case 'click':
         // 
-        // shit fix this and find out why....
+        // shit fix this and find out why (I need to pass the entire events list ugh.)
         // 
         const next = i + 1
         if (events[next] && events[next].action === 'navigation*' && this._options.waitForNavigation && !this._navigationPromiseSet) {
