@@ -29,7 +29,7 @@
           </button>
           <a href="#" @click="showResultsTab = true" v-show="code">view code</a>
         </div>
-       <!--  <AssertionTab :code="code" :copy-link-text="copyLinkText" :restart="restart" :set-copying="setCopying" v-show="showResultsTab" /> -->
+        <AssertionTab :code="code" :copy-link-text="copyLinkText" :restart="restart" :set-copying="setCopying" v-show="showAssertionsTab" />
         <ResultsTab :code="code" :copy-link-text="copyLinkText" :restart="restart" :set-copying="setCopying" v-show="showResultsTab"/>
         <div class="results-footer" v-show="showResultsTab">
           <div class="row">  
@@ -64,11 +64,13 @@
         fileName: '',
         code: '',
         showResultsTab: false,
+        showAssertionsTab: false,
         showHelp: false,
         liveEvents: [],
         assertionEvents: [],
         recording: [],
         isRecording: false,
+        isAsserting: false,
         isPaused: false,
         isCopying: false,
         bus: null,
@@ -119,31 +121,29 @@
       stop () {
         console.debug('stop recorder')
         this.bus.postMessage({ action: 'stop' })
-        console.log('rec stops ')
         this.$chrome.storage.local.get(['recording', 'options'], ({ recording, options }) => {
-          console.log('recording', recording);
           console.debug('loaded recording', recording)
           console.debug('loaded options', options)
-
-          this.recording = recording
-          const codeOptions = options ? options.code : {}
-
-          const codeGen = new ClassGenerator(codeOptions)
-          this.code = codeGen.generate(recording);
-          // console.log(this.code)
+          console.log(this.code)
           // 
           // TODO: set this that if options.getAssertions go to assertions tab or something
-          // 
-          // if (options) {
-
-          // } else {
-            this.showResultsTab = true
-          // }
+          //
+          this.recording = recording;
+          console.log(options.code.generateAssertions, this.showAssertionsTab)
+          if (options.code.generateAssertions && !this.showAssertionsTab) {
+            this.isAsserting = false;
+            this.showAssertionsTab = true;
+          } else {
+            const codeOptions = options ? options.code : {};
+            const codeGen = new ClassGenerator(codeOptions);
+            this.code = codeGen.generate(recording);
+            this.assertions = false;
+            this.showResultsTab = true;
+          }
           this.storeState()
         })
       },
       restart () {
-        console.log('restart')
         this.cleanUp()
         this.bus.postMessage({ action: 'cleanUp' })
       },
@@ -208,7 +208,12 @@
         return this.isPaused ? 'paused' : 'recording'
       },
       recordButtonText () {
-        return this.isRecording ? 'Stop' : 'Record'
+        if (this.isRecording) {
+          return 'Stop';
+        } else if (!this.isRecording && this.isAsserting) {
+          return 'Done with Assertions';
+        }
+        return 'Record';
       },
       pauseButtonText () {
         return this.isPaused ? 'Resume' : 'Pause'
