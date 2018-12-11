@@ -94,6 +94,9 @@
       this.bus = this.$chrome.extension.connect({ name: 'recordControls' })
     },
     methods: {
+      // 
+      // TODO: break this out to 3 steps
+      // 
       toggleRecord () {
         if (this.isRecording) {
           this.stop()
